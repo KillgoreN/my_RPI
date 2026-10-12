@@ -5,7 +5,7 @@
 # Global variable definition
 LOGDIR="../log"
 LOGFILE="push_my_ip.log"
-USER=ferree
+USER=nkillgore
 
 # Init logger helper function
 init_log () {
@@ -34,7 +34,7 @@ get_my_ips () {
   # Check the inferfaces
   ret=$(ip -o -4 addr | grep -v "lo " | awk -F/ '{print $1}' | awk -v user=$USER '{print "- "$2" : "$4" [SSH](ssh://"user"@"$4") [SFTP](sftp://"user"@"$4")"}')
   if [[ "$ret" == *"wlan0"* ]] ; then
-    sig_strength=$(iwconfig wlan0 | grep Quality | awk -F"[=/]" '{print $2}')
+    sig_strength=$(grep wlan0 /proc/net/wireless | tr -s " " | cut -d" " -f4 | tr -d ".")
     ret="${ret} - Signal strength: $((100 * ${sig_strength} / 70))%"
   fi
   # If eth0 is found but not wlan0, wait for WLAN0 for 30s
@@ -42,7 +42,7 @@ get_my_ips () {
     for i in {1..10} ; do
       ret=$(ip -o -4 addr | grep -v "lo " | awk -F/ '{print $1}' | awk -v user=$USER '{print "- "$2" : "$4" [SSH](ssh://"user"@"$4") [SFTP](sftp://"user"@"$4")"}')
       if [[ "$ret" == *"wlan0"* ]] ; then
-        sig_strength=$(iwconfig wlan0 | grep Quality | awk -F"[=/]" '{print $2}')
+        sig_strength=$(grep wlan0 /proc/net/wireless | tr -s " " | cut -d" " -f4 | tr -d ".")
         ret="${ret} - Signal strength: $((100 * ${sig_strength} / 70))%"
         break
       fi
@@ -82,6 +82,6 @@ EOL
 # End of file output
 log "committing to git repo"
 git commit -am "auto IP commit $timestamp" >/dev/null 2>&1 # commit the change in git
-git push origin master                     >/dev/null 2>&1 # push to GitLab
+git push origin main >> $LOGDIR/$LOGFILE 2>&1
 log "done"
 popd >/dev/null 2>&1                                       # return to original folder
